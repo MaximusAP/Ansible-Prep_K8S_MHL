@@ -1,0 +1,24 @@
+---
+- name: Install kube-prometheus-stack monitoring
+  hosts: k8s-master-01
+  become: yes
+  tasks:
+    - name: Install Helm if missing
+      shell: |
+        if ! command -v helm >/dev/null 2>&1; then
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        fi
+      changed_when: false
+
+    - name: Add Prometheus community Helm repo
+      become_user: "{{ ansible_user }}"
+      shell: |
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+        helm repo update
+
+    - name: Install kube-prometheus-stack
+      become_user: "{{ ansible_user }}"
+      shell: |
+        helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+          --namespace monitoring \
+          --create-namespace

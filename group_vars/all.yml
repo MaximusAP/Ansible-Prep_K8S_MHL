@@ -1,0 +1,10 @@
+ansible_user: admin
+ansible_ssh_private_key_file: ~/.ssh/id_rsa
+
+kubernetes_version: "1.30"
+
+control_plane_endpoint: "192.168.2.123:6443"
+
+pod_network_cidr: "10.244.0.0/16"
+
+metallb_ip_range: "192.168.2.130-192.168.2.140"

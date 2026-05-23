@@ -1,0 +1,33 @@
+---
+- name: Install Rancher using Helm
+  hosts: k8s-master-01
+  become: yes
+  tasks:
+    - name: Install Helm if missing
+      shell: |
+        if ! command -v helm >/dev/null 2>&1; then
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        fi
+      changed_when: false
+
+    - name: Add Rancher Helm repo
+      become_user: "{{ ansible_user }}"
+      shell: |
+        helm repo add rancher-latest https://releases.rancher.com/server-charts/latest || true
+        helm repo add jetstack https://charts.jetstack.io || true
+        helm repo update
+
+    - name: Install cert-manager
+      become_user: "{{ ansible_user }}"
+      shell: |
+        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.crds.yaml
+        helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace
+
+    - name: Install Rancher
+      become_user: "{{ ansible_user }}"
+      shell: |
+        helm upgrade --install rancher rancher-latest/rancher \
+          --namespace cattle-system \
+          --create-namespace \
+          --set hostname=rancher.local \
+          --set bootstrapPassword=admin

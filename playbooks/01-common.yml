@@ -1,0 +1,26 @@
+---
+- name: Common OS Configuration
+  hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Disable swap
+      shell: swapoff -a
+
+    - name: Remove swap from fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^.*swap.*$'
+        replace: ''
+
+    - name: Install base packages
+      apt:
+        name:
+          - curl
+          - vim
+          - git
+          - net-tools
+          - open-vm-tools
+        state: present
+        update_cache: yes

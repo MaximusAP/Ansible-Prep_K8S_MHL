@@ -1,0 +1,13 @@
+---
+- name: Install ingress-nginx
+  hosts: k8s-master-01
+  become: yes
+  tasks:
+    - name: Install ingress-nginx controller
+      become_user: "{{ ansible_user }}"
+      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.2/deploy/static/provider/cloud/deploy.yaml
+
+    - name: Wait for ingress-nginx controller
+      become_user: "{{ ansible_user }}"
+      shell: kubectl wait --namespace ingress-nginx --for=condition=available deployment/ingress-nginx-controller --timeout=300s
+      changed_when: false

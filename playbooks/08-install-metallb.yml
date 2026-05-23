@@ -1,0 +1,36 @@
+---
+- name: Install MetalLB
+  hosts: k8s-master-01
+  become: yes
+  tasks:
+    - name: Install MetalLB manifests
+      become_user: "{{ ansible_user }}"
+      shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+
+    - name: Wait for MetalLB controller
+      become_user: "{{ ansible_user }}"
+      shell: kubectl wait --namespace metallb-system --for=condition=available deployment/controller --timeout=180s
+      changed_when: false
+
+    - name: Configure MetalLB IP pool
+      become_user: "{{ ansible_user }}"
+      shell: |
+        cat <<YAML | kubectl apply -f -
+        apiVersion: metallb.io/v1beta1
+        kind: IPAddressPool
+        metadata:
+          name: home-lab-pool
+          namespace: metallb-system
+        spec:
+          addresses:
+          - {{ metallb_ip_range }}
+        ---
+        apiVersion: metallb.io/v1beta1
+        kind: L2Advertisement
+        metadata:
+          name: home-lab-l2
+          namespace: metallb-system
+        spec:
+          ipAddressPools:
+          - home-lab-pool
+        YAML
